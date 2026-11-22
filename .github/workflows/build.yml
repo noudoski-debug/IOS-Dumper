@@ -31,7 +31,7 @@ jobs:
           make clean
           make package FINALPACKAGE=1 THEOS_PACKAGE_SCHEME=rootless
 
-      - name: Build Standalone IPA & Dylib (TrollStore)
+      - name: Build Standalone TrollStore IPA & Bare Dylib
         run: |
           export THEOS=~/theos
           make clean
@@ -41,10 +41,12 @@ jobs:
 
           APP_DIR=$(find .theos -name "IOSDumper.app" -type d | head -n 1)
           if [ -n "$APP_DIR" ]; then
-            echo "Packaging IPA from $APP_DIR"
+            echo "Found $APP_DIR, packaging TrollStore IPA..."
+            # Копируем твик внутрь .app чтобы IPA был самодостаточным
+            find .theos -name "*.dylib" -exec cp {} "$APP_DIR/" \;
             mkdir -p Payload
             cp -r "$APP_DIR" Payload/
-            zip -r artifacts/IOSDumper.ipa Payload
+            zip -r artifacts/IOSDumper-TrollStore.ipa Payload
             rm -rf Payload
           fi
 

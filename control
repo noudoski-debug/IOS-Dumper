@@ -2,7 +2,7 @@ Package: com.c4.iosdumper
 Name: IOS-Dumper
 Depends: mobilesubstrate
 Version: 1.0.0
-Architecture: iphoneos-arm
+Architecture: iphoneos-arm64
 Description: In-game runtime Il2Cpp dumper for iOS (dump.cs, script.json)
 Maintainer: c4
 Author: c4
