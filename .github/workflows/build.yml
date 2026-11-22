@@ -16,7 +16,7 @@ jobs:
       - name: Install Dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y build-essential curl git libtinfo5 rsync zstd unzip clang lld
+          sudo apt-get install -y build-essential curl git rsync zstd unzip clang lld xz-utils
 
       - name: Install Theos & Toolchain (Linux cross-compile for iOS)
         run: |
