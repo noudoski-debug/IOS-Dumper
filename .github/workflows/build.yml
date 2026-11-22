@@ -41,12 +41,22 @@ jobs:
 
           APP_DIR=$(find .theos -name "IOSDumper.app" -type d | head -n 1)
           if [ -n "$APP_DIR" ]; then
-            echo "Found $APP_DIR, packaging TrollStore IPA..."
-            # Подписываем приложение псевдо-подписью ldid с энтитлментами
+            echo "Packing app: $APP_DIR"
+            
+            # В Theos Info.plist обязательно копируется внутрь .app бандла
+            cp -f app/Info.plist "$APP_DIR/Info.plist"
+            
+            # Подпись бинарника
             ldid -Sapp/entitlements.plist "$APP_DIR/IOSDumper" || true
+
+            # Формирование структуры IPA
+            rm -rf Payload
             mkdir -p Payload
             cp -r "$APP_DIR" Payload/
-            # Zip без лишних метаданных
+            
+            # Проверяем наличие Info.plist перед упаковкой
+            ls -la Payload/IOSDumper.app/
+            
             zip -qr artifacts/IOSDumper-TrollStore.ipa Payload
             rm -rf Payload
           fi
