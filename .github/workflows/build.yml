@@ -7,28 +7,15 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: macos-15
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Install Dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y build-essential curl git rsync zstd unzip clang lld xz-utils
-
-      - name: Install Theos & Toolchain (Linux cross-compile for iOS)
+      - name: Install Theos
         run: |
           git clone --recursive https://github.com/theos/theos.git ~/theos
-          
-          # Скачиваем готовый LLVM/Clang тулчейн для iOS под Linux
-          curl -LO https://github.com/sbingner/llvm-project/releases/download/v10.0.0-1/linux-ios-arm64.tar.lzma
-          mkdir -p ~/theos/toolchain/linux/iphone
-          tar --lzma -xf linux-ios-arm64.tar.lzma -C ~/theos/toolchain/linux/iphone/
-          rm linux-ios-arm64.tar.lzma
-
-          # Скачиваем SDK iOS
           curl -LO https://github.com/theos/sdks/archive/refs/heads/master.zip
           unzip -q master.zip
           mv sdks-master/*.sdk ~/theos/sdks/
