@@ -42,11 +42,12 @@ jobs:
           APP_DIR=$(find .theos -name "IOSDumper.app" -type d | head -n 1)
           if [ -n "$APP_DIR" ]; then
             echo "Found $APP_DIR, packaging TrollStore IPA..."
-            # Копируем твик внутрь .app чтобы IPA был самодостаточным
-            find .theos -name "*.dylib" -exec cp {} "$APP_DIR/" \;
+            # Подписываем приложение псевдо-подписью ldid с энтитлментами
+            ldid -Sapp/entitlements.plist "$APP_DIR/IOSDumper" || true
             mkdir -p Payload
             cp -r "$APP_DIR" Payload/
-            zip -r artifacts/IOSDumper-TrollStore.ipa Payload
+            # Zip без лишних метаданных
+            zip -qr artifacts/IOSDumper-TrollStore.ipa Payload
             rm -rf Payload
           fi
 

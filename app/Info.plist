@@ -3,7 +3,7 @@
 <plist version="1.0">
 <dict>
     <key>CFBundleExecutable</key>
-    <string>IOSDumperApp</string>
+    <string>IOSDumper</string>
     <key>CFBundleIdentifier</key>
     <string>com.c4.iosdumperapp</string>
     <key>CFBundleName</key>
@@ -16,8 +16,19 @@
     <string>1.0</string>
     <key>CFBundlePackageType</key>
     <string>APPL</string>
+    <key>CFBundleSupportedPlatforms</key>
+    <array>
+        <string>iPhoneOS</string>
+    </array>
+    <key>MinimumOSVersion</key>
+    <string>14.0</string>
     <key>LSRequiresIPhoneOS</key>
     <true/>
+    <key>UIDeviceFamily</key>
+    <array>
+        <integer>1</integer>
+        <integer>2</integer>
+    </array>
     <key>UIRequiredDeviceCapabilities</key>
     <array>
         <string>arm64</string>
