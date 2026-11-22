@@ -8,7 +8,7 @@ include $(THEOS_MAKE_PATH)/aggregate.mk
 
 TWEAK_NAME = IOSDumper
 IOSDumper_FILES = src/entry.mm src/dumper.cpp
-IOSDumper_CFLAGS = -fobjc-arc
+IOSDumper_CFLAGS = -fobjc-arc -Wno-deprecated-declarations
 IOSDumper_CCFLAGS = -std=c++20
 IOSDumper_LDFLAGS = -ldl
 

@@ -8,9 +8,10 @@
 static void ShowAlertOnScreen(NSString* title, NSString* msg) {
     dispatch_async(dispatch_get_main_queue(), ^{
         UIWindow* window = nil;
-        for (UIWindowScene* scene in [UIApplication sharedApplication].connectedScenes) {
-            if ([scene isKindOfClass:[UIWindowScene class]]) {
-                for (UIWindow* w in scene.windows) {
+        for (UIScene* scene in [UIApplication sharedApplication].connectedScenes) {
+            if ([scene isKindOfClass:[UIWindowScene class]] && scene.activationState == UISceneActivationStateForegroundActive) {
+                UIWindowScene* ws = (UIWindowScene*)scene;
+                for (UIWindow* w in ws.windows) {
                     if (w.isKeyWindow) {
                         window = w;
                         break;
@@ -18,7 +19,19 @@ static void ShowAlertOnScreen(NSString* title, NSString* msg) {
                 }
             }
         }
-        if (!window) window = [UIApplication sharedApplication].keyWindow;
+        if (!window) {
+            for (UIScene* scene in [UIApplication sharedApplication].connectedScenes) {
+                if ([scene isKindOfClass:[UIWindowScene class]]) {
+                    UIWindowScene* ws = (UIWindowScene*)scene;
+                    if (ws.windows.count > 0) {
+                        window = ws.windows.firstObject;
+                        break;
+                    }
+                }
+            }
+        }
+
+        if (!window) return;
 
         UIViewController* root = window.rootViewController;
         while (root.presentedViewController) {
