@@ -1,9 +1,19 @@
 #import "ViewController.h"
 #import <objc/runtime.h>
 
+@interface LSApplicationProxy : NSObject
++ (id)applicationProxyForIdentifier:(id)arg1;
+@property(readonly, nonatomic) NSString *applicationIdentifier;
+@property(readonly, nonatomic) NSString *localizedShortName;
+@property(readonly, nonatomic) NSString *localizedName;
+@property(readonly, nonatomic) NSString *bundleExecutable;
+@property(readonly, nonatomic) NSString *bundleType;
+@end
+
 @interface LSApplicationWorkspace : NSObject
 + (id)defaultWorkspace;
 - (id)allInstalledApplications;
+- (id)allApplications;
 - (BOOL)openApplicationWithBundleID:(id)arg1;
 @end
 
@@ -22,7 +32,7 @@
     self.tableView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
     [self.view addSubview:self.tableView];
 
-    UIBarButtonItem *btnShare = [[UIBarButtonItem alloc] initWithTitle:@"Поделиться Дампом" style:UIBarButtonItemStylePlain target:self action:@selector(shareDumps)];
+    UIBarButtonItem *btnShare = [[UIBarButtonItem alloc] initWithTitle:@"Поделиться" style:UIBarButtonItemStylePlain target:self action:@selector(shareDumps)];
     self.navigationItem.rightBarButtonItem = btnShare;
 
     [self loadApplications];
@@ -33,12 +43,24 @@
     if (!LSApplicationWorkspace_class) return;
 
     id workspace = [LSApplicationWorkspace_class performSelector:@selector(defaultWorkspace)];
-    NSArray *apps = [workspace performSelector:@selector(allInstalledApplications)];
+    NSArray *apps = nil;
+    if ([workspace respondsToSelector:@selector(allApplications)]) {
+        apps = [workspace performSelector:@selector(allApplications)];
+    } else if ([workspace respondsToSelector:@selector(allInstalledApplications)]) {
+        apps = [workspace performSelector:@selector(allInstalledApplications)];
+    }
+
+    [self.installedApps removeAllObjects];
 
     for (id app in apps) {
-        NSString *type = [app performSelector:@selector(bundleType)];
-        if ([type isEqualToString:@"User"]) {
-            NSString *bundleId = [app performSelector:@selector(applicationIdentifier)];
+        NSString *bundleId = [app performSelector:@selector(applicationIdentifier)];
+        if (!bundleId) continue;
+
+        // Фильтруем чисто системные демоны Apple
+        if ([bundleId hasPrefix:@"com.apple.mobilesafari"] ||
+            [bundleId hasPrefix:@"com.apple.Preferences"] ||
+            ![bundleId hasPrefix:@"com.apple."]) {
+            
             NSString *name = [app performSelector:@selector(localizedName)];
             if (!name) name = [app performSelector:@selector(localizedShortName)];
             if (!name) name = bundleId;
@@ -46,6 +68,12 @@
             [self.installedApps addObject:@{@"name": name, @"bundleId": bundleId}];
         }
     }
+
+    // Сортировка по имени
+    [self.installedApps sortUsingComparator:^NSComparisonResult(NSDictionary* a, NSDictionary* b) {
+        return [a[@"name"] localizedCaseInsensitiveCompare:b[@"name"]];
+    }];
+
     [self.tableView reloadData];
 }
 
@@ -75,7 +103,7 @@
     NSString *name = info[@"name"];
 
     UIAlertController *alert = [UIAlertController alertControllerWithTitle:@"Запуск & Дамп"
-                                                                   message:[NSString stringWithFormat:@"Запустить %@? Подожди 5-10 секунд в игре, затем вернись сюда и нажми 'Поделиться Дампом'.", name]
+                                                                   message:[NSString stringWithFormat:@"Запустить %@?\n\nВ игре появится окно с уведомлением, как только дамп снимется.", name]
                                                             preferredStyle:UIAlertControllerStyleAlert];
 
     [alert addAction:[UIAlertAction actionWithTitle:@"Отмена" style:UIAlertActionStyleCancel handler:nil]];
@@ -92,28 +120,22 @@
     NSMutableArray *itemsToShare = [NSMutableArray array];
     NSFileManager *fm = [NSFileManager defaultManager];
 
-    // Пути к дампам
     NSString *sharedDumpDir = @"/var/mobile/Media/Downloads/Dump";
     NSString *dumpCs = [sharedDumpDir stringByAppendingPathComponent:@"dump.cs"];
     NSString *scriptJson = [sharedDumpDir stringByAppendingPathComponent:@"script.json"];
 
-    if ([fm fileExistsAtPath:dumpCs]) {
-        [itemsToShare addObject:[NSURL fileURLWithPath:dumpCs]];
-    }
-    if ([fm fileExistsAtPath:scriptJson]) {
-        [itemsToShare addObject:[NSURL fileURLWithPath:scriptJson]];
-    }
+    if ([fm fileExistsAtPath:dumpCs]) [itemsToShare addObject:[NSURL fileURLWithPath:dumpCs]];
+    if ([fm fileExistsAtPath:scriptJson]) [itemsToShare addObject:[NSURL fileURLWithPath:scriptJson]];
 
     if (itemsToShare.count == 0) {
         UIAlertController *errAlert = [UIAlertController alertControllerWithTitle:@"Дамп не найден"
-                                                                         message:@"Сначала запусти игру на 5-10 секунд, чтобы создались файлы dump.cs и script.json."
+                                                                         message:@"Файлы дампа ещё не созданы. Убедись, что выбранная игра сделана на Unity (Il2Cpp) и дождись окна об окончании дампа в самой игре."
                                                                   preferredStyle:UIAlertControllerStyleAlert];
         [errAlert addAction:[UIAlertAction actionWithTitle:@"ОК" style:UIAlertActionStyleDefault handler:nil]];
         [self presentViewController:errAlert animated:YES completion:nil];
         return;
     }
 
-    // Стандартное системное окно "Поделиться" (AirDrop, Telegram, Сохранить в Файлы)
     UIActivityViewController *activityVC = [[UIActivityViewController alloc] initWithActivityItems:itemsToShare applicationActivities:nil];
     if (UIDevice.currentDevice.userInterfaceIdiom == UIUserInterfaceIdiomPad) {
         activityVC.popoverPresentationController.barButtonItem = self.navigationItem.rightBarButtonItem;
