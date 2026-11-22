@@ -25,13 +25,13 @@ jobs:
           mv sdks-master/*.sdk ~/theos/sdks/ || true
           rm -rf sdks-master master.zip
 
-      - name: Build Rootless DEB (Dopamine iOS 16+)
+      - name: Build Rootless DEB (Tweak + App for Dopamine)
         run: |
           export THEOS=~/theos
           make clean
           make package FINALPACKAGE=1 THEOS_PACKAGE_SCHEME=rootless
 
-      - name: Build Bare Dylib (for TrollStore / Sideloading)
+      - name: Build Standalone IPA & Dylib (TrollStore)
         run: |
           export THEOS=~/theos
           make clean
@@ -39,10 +39,20 @@ jobs:
           mkdir -p artifacts
           find .theos -name "*.dylib" -exec cp {} artifacts/ \;
 
-      - name: Upload DEB and Dylib
+          APP_DIR=$(find .theos -name "IOSDumper.app" -type d | head -n 1)
+          if [ -n "$APP_DIR" ]; then
+            echo "Packaging IPA from $APP_DIR"
+            mkdir -p Payload
+            cp -r "$APP_DIR" Payload/
+            zip -r artifacts/IOSDumper.ipa Payload
+            rm -rf Payload
+          fi
+
+      - name: Upload Artifacts
         uses: actions/upload-artifact@v4
         with:
           name: IOSDumper-Output
           path: |
             packages/*.deb
             artifacts/*.dylib
+            artifacts/*.ipa

@@ -3,8 +3,10 @@ ARCHS := arm64
 
 include $(THEOS)/makefiles/common.mk
 
-TWEAK_NAME = IOSDumper
+SUBPROJECTS += app
+include $(THEOS_MAKE_PATH)/aggregate.mk
 
+TWEAK_NAME = IOSDumper
 IOSDumper_FILES = src/entry.mm src/dumper.cpp
 IOSDumper_CFLAGS = -fobjc-arc
 IOSDumper_CCFLAGS = -std=c++20
