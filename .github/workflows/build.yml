@@ -18,22 +18,22 @@ jobs:
           git clone --recursive https://github.com/theos/theos.git ~/theos
           curl -LO https://github.com/theos/sdks/archive/refs/heads/master.zip
           unzip -q master.zip
-          mv sdks-master/*.sdk ~/theos/sdks/
+          mv sdks-master/*.sdk ~/theos/sdks/ || true
           rm -rf sdks-master master.zip
 
       - name: Build Rootless DEB (Dopamine iOS 16+)
         run: |
           export THEOS=~/theos
           make clean
-          make package FINALPACKAGE=1 THEOS_PACKAGE_SCHEME=rootless
+          make package FINALPACKAGE=1 THEOS_PACKAGE_SCHEME=rootless messages=yes
 
       - name: Build Bare Dylib (for TrollStore / Sideloading)
         run: |
           export THEOS=~/theos
           make clean
-          make FINALPACKAGE=1
+          make FINALPACKAGE=1 messages=yes
           mkdir -p artifacts
-          cp -r .theos/obj/debug/*.dylib artifacts/ 2>/dev/null || cp -r .theos/obj/*.dylib artifacts/ 2>/dev/null || find .theos -name "*.dylib" -exec cp {} artifacts/ \;
+          find .theos -name "*.dylib" -exec cp {} artifacts/ \;
 
       - name: Upload DEB and Dylib
         uses: actions/upload-artifact@v4
