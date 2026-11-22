@@ -13,6 +13,10 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
+      - name: Install Dependencies
+        run: |
+          brew install ldid dpkg
+
       - name: Install Theos
         run: |
           git clone --recursive https://github.com/theos/theos.git ~/theos
@@ -25,13 +29,13 @@ jobs:
         run: |
           export THEOS=~/theos
           make clean
-          make package FINALPACKAGE=1 THEOS_PACKAGE_SCHEME=rootless messages=yes
+          make package FINALPACKAGE=1 THEOS_PACKAGE_SCHEME=rootless
 
       - name: Build Bare Dylib (for TrollStore / Sideloading)
         run: |
           export THEOS=~/theos
           make clean
-          make FINALPACKAGE=1 messages=yes
+          make FINALPACKAGE=1
           mkdir -p artifacts
           find .theos -name "*.dylib" -exec cp {} artifacts/ \;
 
